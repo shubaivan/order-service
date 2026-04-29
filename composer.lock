@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2e78235483530ab6a82593aa626db812",
+    "content-hash": "442aad8f677d634638e88ab92a75820f",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -1591,6 +1591,47 @@
                 "source": "https://github.com/php-fig/log/tree/3.0.2"
             },
             "time": "2024-09-11T13:17:53+00:00"
+        },
+        {
+            "name": "shubaivan/symfony-shared-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shubaivan/symfony-shared-bundle.git",
+                "reference": "aac7ebe5de33494f72a2500aae7e8b2d73110b4d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shubaivan/symfony-shared-bundle/zipball/aac7ebe5de33494f72a2500aae7e8b2d73110b4d",
+                "reference": "aac7ebe5de33494f72a2500aae7e8b2d73110b4d",
+                "shasum": ""
+            },
+            "require": {
+                "doctrine/doctrine-bundle": "^2.11",
+                "doctrine/orm": "^2.17 || ^3.0",
+                "php": ">=8.2",
+                "symfony/framework-bundle": "^6.4",
+                "symfony/messenger": "^6.4",
+                "symfony/serializer": "^6.4",
+                "symfony/uid": "^6.4",
+                "symfony/validator": "^6.4"
+            },
+            "default-branch": true,
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Shared\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Shared Symfony bundle for product/order microservices: mapped superclass, DTOs, RabbitMQ Messenger config",
+            "support": {
+                "source": "https://github.com/shubaivan/symfony-shared-bundle/tree/master",
+                "issues": "https://github.com/shubaivan/symfony-shared-bundle/issues"
+            },
+            "time": "2026-04-29T07:21:00+00:00"
         },
         {
             "name": "symfony/amqp-messenger",
@@ -5083,7 +5124,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "shubaivan/symfony-shared-bundle": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

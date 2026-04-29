@@ -35,6 +35,9 @@
             "migrations/.gitignore"
         ]
     },
+    "shubaivan/symfony-shared-bundle": {
+        "version": "dev-master"
+    },
     "symfony/console": {
         "version": "6.4",
         "recipe": {
