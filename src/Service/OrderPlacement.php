@@ -21,21 +21,23 @@ final class OrderPlacement
 
     public function place(Uuid $productId, string $customerName, int $quantityOrdered): Order
     {
-        $product = $this->products->findOneById($productId);
-        if (null === $product) {
-            throw new NotFoundHttpException('product not found');
-        }
+        return $this->em->wrapInTransaction(function () use ($productId, $customerName, $quantityOrdered) {
+            $product = $this->products->findOneById($productId);
+            if (null === $product) {
+                throw new NotFoundHttpException('product not found');
+            }
 
-        if ($product->getQuantity() < $quantityOrdered) {
-            throw new BadRequestHttpException(sprintf('not enough stock: requested %d, available %d', $quantityOrdered, $product->getQuantity()));
-        }
+            if ($product->getQuantity() < $quantityOrdered) {
+                throw new BadRequestHttpException(sprintf('not enough stock: requested %d, available %d', $quantityOrdered, $product->getQuantity()));
+            }
 
-        $product->setQuantity($product->getQuantity() - $quantityOrdered);
-        $order = new Order($product, $customerName, $quantityOrdered);
+            $product->setQuantity($product->getQuantity() - $quantityOrdered);
+            $order = new Order($product, $customerName, $quantityOrdered);
 
-        $this->em->persist($order);
-        $this->em->flush();
+            $this->em->persist($order);
+            $this->em->flush();
 
-        return $order;
+            return $order;
+        });
     }
 }
