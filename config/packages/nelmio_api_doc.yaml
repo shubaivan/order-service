@@ -1,0 +1,9 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: Order Service
+            description: Places orders against products mirrored from product-service via RabbitMQ.
+            version: 1.0.0
+    areas:
+        path_patterns:
+            - ^/orders
