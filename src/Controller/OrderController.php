@@ -34,4 +34,30 @@ class OrderController extends AbstractController
 
         return new JsonResponse(OrderResponse::fromEntity($order), 201);
     }
+
+    #[Route('', methods: ['GET'])]
+    public function list(): JsonResponse
+    {
+        $items = array_map(
+            static fn ($order) => OrderResponse::fromEntity($order),
+            $this->orders->findAll(),
+        );
+
+        return new JsonResponse(['data' => $items]);
+    }
+
+    #[Route('/{id}', methods: ['GET'])]
+    public function show(string $id): JsonResponse
+    {
+        if (!Uuid::isValid($id)) {
+            return new JsonResponse(['error' => 'invalid id'], 400);
+        }
+
+        $order = $this->orders->findOneById(Uuid::fromString($id));
+        if (null === $order) {
+            return new JsonResponse(['error' => 'not found'], 404);
+        }
+
+        return new JsonResponse(OrderResponse::fromEntity($order));
+    }
 }
