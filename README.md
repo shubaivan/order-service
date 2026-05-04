@@ -1,47 +1,62 @@
 # order-service
 
-Symfony 6.4 microservice — places orders. Keeps a local mirror of products by consuming `ProductSyncMessage` from RabbitMQ. Validates stock and decrements `quantity` inside a single transaction when an order is placed.
+Symfony 6.4 microservice — manages orders against a **local product mirror**. Validates stock and decrements quantities in a single DB transaction. Consumes `ProductSyncMessage` from the product service to keep its mirror in sync, and publishes `OrderPlacedMessage` after every successful order so the catalog master can decrement too.
 
-Endpoints:
+Part of a four-repo system. See [`tech-task-stack`](https://github.com/shubaivan/tech-task-stack) for the full architecture, live URLs, and end-to-end test recipe.
 
-- `POST /orders` — place an order
-- `GET /orders` — list
-- `GET /orders/{id}` — fetch one
-- `GET /api/doc` — Swagger UI
+## Endpoints
 
-## Run locally
+| Method | Path | Body | Result |
+|---|---|---|---|
+| `POST` | `/orders`      | `{productId, customerName, quantityOrdered}` | `201` + full order with embedded product |
+| `GET`  | `/orders`      | — | `{data: [...]}` |
+| `GET`  | `/orders/{id}` | — | `{orderId, product:{...}, customerName, quantityOrdered, orderStatus}` |
 
-```bash
-docker compose up -d
-composer install
-php bin/console doctrine:database:create --if-not-exists
-php bin/console doctrine:migrations:migrate -n
-symfony serve -d --port=8001
+Errors:
 
-# in another terminal — start the RabbitMQ consumer
-php bin/console messenger:consume product_sync -vv
-```
+- `404` — product not found in the mirror
+- `400` — insufficient stock (returns the available amount in the message)
+
+## Live URL
+
+https://orders.shuba.dev — TLS-enabled, hit it directly with `curl`.
 
 ## Try it
 
-After publishing a product from `product-service`:
-
 ```bash
-curl -X POST http://127.0.0.1:8001/orders \
+curl -s -X POST https://orders.shuba.dev/orders \
   -H 'Content-Type: application/json' \
   -d '{"productId":"<uuid-from-product-service>","customerName":"John Doe","quantityOrdered":2}'
 ```
 
-Response:
+A product must exist in the catalog **and** have replicated into this service's mirror first (usually within a few hundred ms of `POST /products`).
 
-```json
-{
-  "orderId": "01904c7e-...",
-  "product": { "id": "...", "name": "Coffee Mug", "price": 12.99, "quantity": 98 },
-  "customerName": "John Doe",
-  "quantityOrdered": 2,
-  "orderStatus": "Processing"
-}
+## Run locally
+
+This service expects RabbitMQ + PostgreSQL from [`tech-task-stack`](https://github.com/shubaivan/tech-task-stack) on the shared `application` docker network.
+
+```bash
+cd docker && docker compose up -d
+# service then available at http://orders.loc
 ```
 
-If stock is insufficient or the product is unknown, the API responds with `400` / `404`.
+Prereqs: `127.0.0.1 orders.loc` in `/etc/hosts`, the `application` docker network created, the stack from `tech-task-stack` already up.
+
+To consume product-sync messages locally:
+
+```bash
+docker compose exec php bin/console messenger:consume product_sync -vv
+```
+
+## Key files
+
+- `src/Controller/OrderController.php` — HTTP endpoints
+- `src/Service/OrderPlacement.php` — transactional stock validation + decrement + order persist + post-commit publish
+- `src/Entity/Order.php` — order entity with `Processing`/`Rejected` status
+- `src/Entity/Product.php` — local mirror, extends `Shared\Entity\ProductBase`
+- `src/MessageHandler/ProductSyncHandler.php` — consumes catalog changes into the mirror
+- `config/packages/messenger.yaml` — AMQP transport config
+
+## Tech
+
+PHP 8.3 · Symfony 6.4 · Doctrine ORM 3 · PostgreSQL · RabbitMQ via Symfony Messenger
