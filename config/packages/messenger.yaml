@@ -9,6 +9,14 @@ framework:
                         type: fanout
                     queues:
                         order_service_product_sync: ~
+            order_events:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    exchange:
+                        name: orders
+                        type: fanout
+                    queues: []
 
         routing:
             Shared\Message\ProductSyncMessage: product_sync
+            Shared\Message\OrderPlacedMessage: order_events
