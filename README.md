@@ -6,20 +6,97 @@ Part of a four-repo system. See [`tech-task-stack`](https://github.com/shubaivan
 
 ## Endpoints
 
-| Method | Path | Body | Result |
-|---|---|---|---|
-| `POST` | `/orders`      | `{productId, customerName, quantityOrdered}` | `201` + full order with embedded product |
-| `GET`  | `/orders`      | — | `{data: [...]}` |
-| `GET`  | `/orders/{id}` | — | `{orderId, product:{...}, customerName, quantityOrdered, orderStatus}` |
-
-Errors:
-
-- `404` — product not found in the mirror
-- `400` — insufficient stock (returns the available amount in the message)
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/orders`      | Place an order |
+| `GET`  | `/orders`      | List all orders |
+| `GET`  | `/orders/{id}` | Show one order |
 
 ## Live URL
 
 https://orders.shuba.dev — TLS-enabled, hit it directly with `curl`.
+
+## Request / response examples
+
+### POST `/orders` — place an order
+
+Request:
+
+```json
+{
+  "productId": "d5dad408-01fb-468d-9477-c651ec3ebb55",
+  "customerName": "John Doe",
+  "quantityOrdered": 2
+}
+```
+
+Response — `201 Created`:
+
+```json
+{
+  "orderId": "6325cb4e-4099-47ab-936e-28ba29040e80",
+  "product": {
+    "id": "d5dad408-01fb-468d-9477-c651ec3ebb55",
+    "name": "Coffee Mug",
+    "price": 12.99,
+    "quantity": 98
+  },
+  "customerName": "John Doe",
+  "quantityOrdered": 2,
+  "orderStatus": "Processing"
+}
+```
+
+The embedded `product.quantity` is the remaining stock **after** the order — already decremented in the same DB transaction that persisted the order.
+
+Errors:
+
+- `404` — product not found in the mirror.
+- `400` — insufficient stock. Body: `{"detail":"not enough stock: requested N, available M"}`.
+
+### GET `/orders` — list
+
+Response — `200 OK`:
+
+```json
+{
+  "data": [
+    {
+      "orderId": "6325cb4e-4099-47ab-936e-28ba29040e80",
+      "product": {
+        "id": "d5dad408-01fb-468d-9477-c651ec3ebb55",
+        "name": "Coffee Mug",
+        "price": 12.99,
+        "quantity": 98
+      },
+      "customerName": "John Doe",
+      "quantityOrdered": 2,
+      "orderStatus": "Processing"
+    }
+  ]
+}
+```
+
+### GET `/orders/{id}` — show
+
+Response — `200 OK`:
+
+```json
+{
+  "orderId": "6325cb4e-4099-47ab-936e-28ba29040e80",
+  "product": {
+    "id": "d5dad408-01fb-468d-9477-c651ec3ebb55",
+    "name": "Coffee Mug",
+    "price": 12.99,
+    "quantity": 98
+  },
+  "customerName": "John Doe",
+  "quantityOrdered": 2,
+  "orderStatus": "Processing"
+}
+```
+
+Errors: `400` on invalid UUID, `404` if not found.
 
 ## Try it
 
